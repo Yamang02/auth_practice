@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cd 01-basic && npm install && npm run build"
+
+[deploy]
+startCommand = "cd 01-basic && node dist/index.js"
