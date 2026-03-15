@@ -1,12 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import bcrypt from "bcrypt";
-import { pool } from "../db";
 
-export async function basicAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function basicAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Basic ")) {
@@ -27,24 +21,14 @@ export async function basicAuth(
   const username = decoded.slice(0, colonIndex);
   const password = decoded.slice(colonIndex + 1);
 
-  const result = await pool.query(
-    "SELECT * FROM users WHERE username = $1",
-    [username]
-  );
-  const user = result.rows[0];
-
-  if (!user) {
+  if (
+    username !== process.env.ADMIN_USERNAME ||
+    password !== process.env.ADMIN_PASSWORD
+  ) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
-  const isValid = await bcrypt.compare(password, user.password_hash);
-  if (!isValid) {
-    res.status(401).json({ error: "Invalid credentials" });
-    return;
-  }
-
-  // 이후 핸들러에서 유저 정보 사용 가능
-  res.locals.user = { id: user.id, username: user.username };
+  res.locals.user = { username };
   next();
 }
